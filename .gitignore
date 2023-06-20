@@ -1,6 +1,10 @@
-Notebook/__pycache__/
-/Datasets/DIODE_FULL/
-/Datasets/DIODE_FULL
-Datasets/DIODE_FULL/
-Datasets/
-/Datasets/
+Experiment/*
+Experiment_old
+Script
+Scripts
+Notebook
+Datasets/DIODE_FULL/*
+Datasets/DIODE_FULL - Copia (2)/*
+Datasets/DIODE_FULL - Copia (2).zip
+Notebook
+**__pycache__

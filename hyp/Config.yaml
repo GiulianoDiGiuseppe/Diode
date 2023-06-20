@@ -1,0 +1,47 @@
+{
+    "train_scenes": [
+        "scene_00000",
+        "scene_00001",
+        "scene_00006",
+        "scene_00004"
+    ],
+    "val_scenes": [
+        "scene_00002",
+        "scene_00003"
+    ],
+    "test_scenes": [
+        "scene_00005"
+    ],
+    "enable_aug_train": True,
+    "enable_aug_val": False,
+    "enable_aug_test": False,
+    "clamp": True,
+    "percentuale": 1,
+    "batch_size": 8,
+    "shuffle": True,
+    "show_clip": True,
+    "en_clip": False,
+    "enable_BatchNorm2d_alllayer": True,
+    "enable_Dropout_alllayer": True,
+    "decrease_dropout": 1,
+    "value_dropout": 0.5,
+    "criterion": "L1Loss()",
+    "lr": 0.0001,
+    "weight_decay": 0.005,
+    "patience_sched": 5,
+    "factor_sched": 0.2,
+    "verbose_sched": True,
+    "num_epochs": 40,
+    "patience_earlt": 5,
+    "size": [
+        384,
+        512
+    ],
+    "kaggle" : False,
+    "path_dataset":"../Datasets/DIODE_FULL - Copia (2)",
+    "path_dst" : '../Csv/',
+    "csv_path":"../Csv/path_images.csv",
+    "csv_path_aug":"../Csv/path_images_aug.csv",
+    "csv_path_not_aug":"../Csv/path_images_not_aug.csv",
+    "model_type":"Dense121"
+}
