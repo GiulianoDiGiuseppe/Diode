@@ -2,7 +2,7 @@ import os
 import json
 import torch
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 def create_folder_experiment(kaggle,config_dict):
     if kaggle:
@@ -98,6 +98,69 @@ def print_dataset_pred(model,loader, rows=6,offset=0, model_path='/best_model.pt
                 break
         if count >= rows * 3:
             break
+    # Adjust the spacing between subplots
+    fig.tight_layout()
+
+    # Save the plot if save_path is provided
+    if save_path != '':
+        os.makedirs(save_path, exist_ok=True)
+        save_file_path = os.path.join(save_path, str(name)+str(offset)+".png")
+        plt.savefig(save_file_path)
+        plt.close()
+    else:
+        # Display the plot
+        plt.show()
+
+def clamp(img_rgbd_np):
+    lower_percentile = np.percentile(img_rgbd_np, 5)
+    upper_percentile = np.percentile(img_rgbd_np, 95)
+    img_rgbd_np[img_rgbd_np < lower_percentile] = lower_percentile
+    img_rgbd_np[img_rgbd_np > upper_percentile] = upper_percentile
+    return img_rgbd_np
+
+# Prende i pesi salvati
+def print_comparison(dic_model,loader, rows=6, offset=0, model_path='/best_model.pt', save_path='',name=''):
+
+    # Create a figure and axes with 6 rows and rows columns
+    fig, axes = plt.subplots(rows, (2+len(dic_model)))
+    count=0
+    # Iterate over the batch of the loader
+    for batch, data in enumerate(loader):
+        img_rgb, img_rgbd = data
+
+        # Convert tensors to NumPy arrays
+        img_rgb_np = img_rgb[0].permute(1, 2, 0).cpu().numpy()
+        img_rgbd_np = img_rgbd[0].permute(1, 2, 0).cpu().numpy()
+
+        # Display images in the subplot
+        axes[count % rows, (2+len(dic_model)) % (2+len(dic_model))].imshow(img_rgb_np)
+        axes[count % rows, (2+len(dic_model)) % (2+len(dic_model))].axis('off')
+        axes[count % rows, (2+len(dic_model)) % (2+len(dic_model))].set_title("RGB ")
+
+        #print(img_rgbd_np.max())
+        img_rgbd_np=clamp(img_rgbd_np)
+        
+        axes[count % rows, (2+len(dic_model)) % (2+len(dic_model)) + 1].imshow(img_rgbd_np, cmap='jet')
+        axes[count % rows, (2+len(dic_model)) % (2+len(dic_model)) + 1].axis('off')
+        axes[count % rows, (2+len(dic_model)) % (2+len(dic_model)) + 1].set_title("RGBD ")
+
+        cnt=2
+        for titolo, model in dic_model.items():
+            model.eval()
+            with torch.inference_mode():
+                pred = model(img_rgb)
+            result = pred[0].permute(1, 2, 0).cpu().detach().numpy()
+            result=clamp(result)
+            axes[count % rows, (2+len(dic_model)) % (2+len(dic_model)) + cnt].imshow(result, cmap='jet')
+            axes[count % rows, (2+len(dic_model)) % (2+len(dic_model)) + cnt].axis('off')
+            axes[count % rows, (2+len(dic_model)) % (2+len(dic_model)) + cnt].set_title(titolo)
+            cnt+=1
+
+        #print(count,rows)
+        count +=1
+        if count >= rows:
+            break
+
     # Adjust the spacing between subplots
     fig.tight_layout()
 

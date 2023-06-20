@@ -239,6 +239,67 @@ class ED_SkippConnection(nn.Module):
         
         return depth_map
 
+class RegressionModel_vgg16(nn.Module):
+    def __init__(self):
+        super(RegressionModel_vgg16, self).__init__()
+
+        # Carica il modello VGG-16 pre-addestrato
+        vgg = models.vgg16(pretrained=True)
+    
+        # Estrai le features dalla rete VGG fino all'ultimo layer convoluzionale
+        self.features = nn.Sequential(*list(vgg.features.children())[:-1])
+    
+        self.regressor = nn.Sequential(
+            nn.Linear(393216, 1000), # numero di neuroni uscenti da vgg-16
+            nn.LeakyReLU(0.1),
+            torch.nn.Dropout(0.5),
+            nn.Linear(1000, 49152),
+        )
+
+    def forward(self, x):
+        features = self.features(x)
+        features_flat = features.view(features.size(0), -1)
+        regression_vet = self.regressor(features_flat)
+        output = regression_vet.view(-1, 1, 192, 256)
+        return output
+
+class DepthEstimator_plain(nn.Module):
+    def __init__(self):
+        super(DepthEstimator_plain, self).__init__()
+    
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(0.1),
+            torch.nn.Dropout2d(0.5),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(0.1),
+            torch.nn.Dropout2d(0.5),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(0.1),
+            torch.nn.Dropout2d(0.5),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(0.1),
+            torch.nn.Dropout2d(0.5),
+            nn.MaxPool2d(kernel_size=2, stride=2)
+        )
+    
+        self.regressor = nn.Sequential(
+            nn.Linear(128 * 48 * 64, 1000),                                                                                   # 384x512 ridotto 4x4 = 196608 # 192x256 ridotto 8voltex8volte = 49152 # 96x128 ridotto 16x16 = 12288 neuroni
+            nn.LeakyReLU(0.1),
+            torch.nn.Dropout(0.5),
+            nn.Linear(1000, 49152),
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = torch.flatten(x, 1)
+        x = self.regressor(x)
+        x = x.view(-1, 1, 192, 256)
+        return x
+
 
 def train(model, criterion, optimizer, train_loader, val_loader, num_epochs, patience, scheduler,new_experiment_path):
     '''Training the model with
